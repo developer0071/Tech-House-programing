@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tech House - Home Appliance Store</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+<header>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="dot"></div>
+            <p>Online store is now live!</p>
+        </div>
+    </div>
+
+    <div class="nav-main">
+        <div class="logo-section">
+            <div class="logo-text">
+                <h1>Tech House</h1>
+                <p>Premium Appliances</p>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="tech-house-container">
+
+    <section class="hero">
+        <h2>Welcome to Tech House</h2>
+        <p>Your one-stop shop for premium home appliances</p>
+
+        <div class="cta-group">
+            <button class="btn-white" onclick="scrollToOptions()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path>
+                </svg>
+                Get Started
+            </button>
+
+            <button class="btn-outline" onclick="scrollToOptions()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                </svg>
+                Learn More
+            </button>
+        </div>
+    </section>
+
+    <section class="options-section" id="optionsSection">
+        <div class="page-header">
+            <h1>Choose Your Option</h1>
+            <p>Download documentation or learn how to run the application</p>
+        </div>
+
+        <div class="options-prc">
+
+            <div class="option-pr">
+                <div class="title-op">
+                    <img src="https://images.unsplash.com/photo-1568952433726-3896e3881c65?w=600" alt="Flowchart" />
+                    <h1>📊 Flowchart</h1>
+                </div>
+
+                <span><strong>System Design</strong></span>
+                <span>Download the PDF flowchart showing system architecture and workflow.</span>
+                <span>• Authentication Flow</span>
+                <span>• Shopping Cart Process</span>
+                <span>• Admin Panel Structure</span>
+                <span>• Database Schema</span>
+
+                <a class="opt-btn" href="Untitled%20Diagram.drawio%20(1).pdf" download>
+                    Download PDF
+                </a>
+            </div>
+
+            <div class="option-pr">
+                <div class="title-op">
+                    <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600" alt="Source Code" />
+                    <h1>💻 Source Code</h1>
+                </div>
+
+                <span><strong>Full Implementation</strong></span>
+                <span>Downloads all Python source files used in the console application.</span>
+                <span>• index.py - Main app</span>
+                <span>• auth.py - Authentication</span>
+                <span>• database.py - Data</span>
+                <span>• cart.py - Cart</span>
+                <span>• membership.py - Membership</span>
+
+                <button class="opt-btn" type="button" onclick="downloadAllPythonFiles()">
+                    Download .py files
+                </button>
+            </div>
+
+            <div class="option-pr">
+                <div class="title-op">
+                    <img src="https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=600" alt="Terminal" />
+                    <h1>▶️ Live Demo</h1>
+                </div>
+
+                <span><strong>Interactive Terminal</strong></span>
+                <span>Run the complete Tech House application directly in your browser</span>
+                <span>• Full Authentication System</span>
+                <span>• Product Browsing &amp; Search</span>
+                <span>• Shopping Cart &amp; Checkout</span>
+                <span>• Membership Management</span>
+                <button class="opt-btn" type="button" onclick="startTerminal()">
+                    Launch Terminal
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <div class="terminal-main-container" id="terminalContainer" style="display: none;">
+        <div class="page-header">
+            <h1>Tech House Terminal Market</h1>
+            <h2 style="color: red;">WARNING!!! its only simulation , for full experience download the source files and run in real terminal!!</h2>
+        </div>
+
+        <div class="terminal-wrapper">
+            <div class="terminal-header">
+                <div class="terminal-btn close"></div>
+                <div class="terminal-btn minimize"></div>
+                <div class="terminal-btn maximize"></div>
+                <span class="terminal-title">Tech House Terminal Market</span>
+            </div>
+
+            <div class="terminal" id="terminal">
+                <div class="output">Loading instructions...</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <div class="footer-container">
+
+        <div class="footer-el">
+            <div class="footer-logo">
+                <h2>Tech House</h2>
+            </div>
+            <p>Your trusted partner for premium home appliances in Uzbekistan.</p>
+        </div>
+
+        <div class="footer-holder">
+
+            <div class="footer-el">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#optionsSection">Get Started</a></li>
+                    <li><a href="Untitled%20Diagram.drawio%20(1).pdf" download>Download Flowchart</a></li>
+                    <li><a href="#" onclick="downloadAllPythonFiles(); return false;">Download Code</a></li>
+                    <li><a href="#" onclick="startTerminal(); return false;">Setup Guide</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-el">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-el">
+                <h3>Contact</h3>
+
+                <div class="contact-item">
+                    <strong>Phone:</strong>
+                    <p>+998 90 123 45 67</p>
+                </div>
+
+                <div class="contact-item">
+                    <strong>Email:</strong>
+                    <p>support@techhouse.uz</p>
+                </div>
+
+                <div class="contact-item">
+                    <strong>Address:</strong>
+                    <p>Tashkent, Uzbekistan</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2026 Tech House. All rights reserved.</p>
+
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Cookie Policy</a>
+        </div>
+    </div>
+</footer>
+
+<script src="app.js"></script>
+
+</body>
+</html>
