@@ -57,7 +57,7 @@ function clearTerminal() {
     terminal.innerHTML = '';
 }
 
-
+const ZIP_FILE = 'document.zip'
 
 const FLOWCHART_PDF = 'flow-chart.pdf';
 
@@ -68,6 +68,14 @@ function downloadFlowchartFile() {
     const a = document.createElement('a');
     a.href = encodeURI(FLOWCHART_PDF);
     a.download = FLOWCHART_PDF;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+function downloadZipFile() {
+    const a = document.createElement('a');
+    a.href = encodeURI(ZIP_FILE);
+    a.download = ZIP_FILE;
     document.body.appendChild(a);
     a.click();
     a.remove();
