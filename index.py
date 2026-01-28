@@ -94,18 +94,20 @@ class TechHouseApp:
         menu_actions = {
             "1": self._view_by_category,
             "2": self._search_products,
-            "3": self._view_all_products,
-            "4": self._view_membership,
-            "5": self._set_membership,
-            "6": self._add_to_cart,
-            "7": self._view_cart,
-            "8": self._checkout,
-            "9": self._check_admin_status,
-            "10": self._view_purchase_history,
-            "11": self._set_delivery_address,
-            "12": self._add_product,
-            "13": self._make_admin,
+            "3": self._view_membership,   
+            "4": self._add_to_cart,
+            "5": self._view_cart,
+            "6": self._checkout,
+
+            "7": self._check_admin_status,
+            "8": self._view_purchase_history,
+            "9": self._set_delivery_address,
+
+            "10": self._add_product,
+            "11": self._make_admin,
         }
+
+
         
         while True:
             self._clear()
@@ -151,24 +153,22 @@ class TechHouseApp:
         print("\n--- SHOPPING ---")
         print("1. View by category")
         print("2. Search products")
-        print("3. View all products")
-        print("4. View membership packages")
-        print("5. Set membership")
-        print("6. Add to cart")
-        print("7. View cart")
-        print("8. Checkout")
-        
+        print("3. Membership (view + set)")
+        print("4. Add to cart")
+        print("5. View cart")
+        print("6. Checkout")
+
         if user:
             print("\n--- ACCOUNT ---")
-            print("9. Check admin status")
-            print("10. View purchase history")
-            print("11. Set delivery address")
-            
+            print("7. Check admin status")
+            print("8. View purchase history")
+            print("9. Set delivery address")
+
             if self.auth.is_admin():
                 print("\n--- ADMIN ---")
-                print("12. Add product")
-                print("13. Make user admin")
-        
+                print("10. Add product")
+                print("11. Make user admin")
+
         print("\n0. Back/Logout")
         print("99. Exit Application")
     
@@ -177,28 +177,40 @@ class TechHouseApp:
         print("=" * 70)
         print("CATEGORIES")
         print("=" * 70)
-        
+
         categories = self.database.get_all_categories()
-        
+
         if not categories:
             print("\nNo categories available")
             input("\nPress ENTER...")
             return
-        
+
+        print("0. Cancel / Back")
+        print("A. View ALL products")  # new option
+        print("-" * 70)
+
         for i, category in enumerate(categories, 1):
             print(f"{i}. {category}")
-        
-        choice = input("\nSelect category (0 to cancel): ").strip()
-        
-        if choice.isdigit() and choice != "0":
+
+        choice = input("\nSelect category (number), A for all, 0 to cancel: ").strip().lower()
+
+        if choice == "0":
+            return
+        elif choice == "a":
+            self._view_all_products()   # moved here
+        elif choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(categories):
                 self._show_category_products(categories[idx])
             else:
                 print("\nInvalid category!")
                 time.sleep(1)
-        
+        else:
+            print("\nInvalid choice!")
+            time.sleep(1)
+
         input("\nPress ENTER...")
+
     
     def _show_category_products(self, category):
         appliances = self.database.get_appliances_by_category(category)
@@ -271,48 +283,62 @@ class TechHouseApp:
     
     def _view_membership(self):
         self._clear()
+        print("=" * 70)
+        print("MEMBERSHIP CENTER")
+        print("=" * 70)
+
         Membership.display_packages()
-        
+
         user = self.auth.get_current_user()
-        if user and user.get('membership'):
-            print(f"\nYour current membership: {user['membership']}")
-        elif not user:
-            print("\nLogin to access membership benefits!")
-        
-        input("\nPress ENTER...")
-    
-    def _set_membership(self):
-        user = self.auth.get_current_user()
+
         if not user:
-            print("\nPlease login first to access membership!")
-            time.sleep(1.5)
+            print("\nLogin to set a membership and unlock discounts!")
+            input("\nPress ENTER...")
             return
-        
-        self._clear()
+
+        current = user.get("membership")
+        purchases = user.get("total_purchases", 0)
+
+        print("\n" + "=" * 70)
+        print("YOUR STATS")
         print("=" * 70)
-        print("SELECT MEMBERSHIP")
+        print(f"User: {user['username']}")
+        print(f"Total Purchases: {purchases}")
+
+        if current:
+            info = Membership.get_package_info(current)
+            free_delivery = "YES" if Membership.has_free_delivery(current) else "NO"
+            print(f"\nCurrent Membership: {current}")
+            print(f"Discount: {info['discount']}%")
+            print(f"Free Delivery: {free_delivery}")
+        else:
+            print("\nCurrent Membership: None")
+            print("Discount: 0%")
+            print("Free Delivery: NO")
+
+        print("\n" + "=" * 70)
+        print("SET / CHANGE MEMBERSHIP")
         print("=" * 70)
-        
-        if user.get('membership'):
-            print(f"\nCurrent membership: {user['membership']}")
-        
-        print("\n1. Bronze (5% discount)")
+        print("1. Bronze (5% discount)")
         print("2. Silver (10% discount)")
         print("3. Gold (15% discount + Free delivery)")
-        print("0. Cancel")
-        
+        print("0. Keep current / Back")
+
         choice = input("\nSelect: ").strip()
-        packages = {1: "Bronze", 2: "Silver", 3: "Gold"}
-        
-        if choice.isdigit() and int(choice) in packages:
-            selected = packages[int(choice)]
-            user['membership'] = selected
-            self.auth.users[user['username']]['membership'] = selected
-            print(f"\nMembership successfully set to {selected}!")
-            time.sleep(1.5)
-        elif choice != "0":
+        packages = {"1": "Bronze", "2": "Silver", "3": "Gold"}
+
+        if choice == "0":
+            return
+
+        if choice in packages:
+            selected = packages[choice]
+            user["membership"] = selected
+            self.auth.users[user["username"]]["membership"] = selected
+            print(f"\n✓ Membership successfully set to {selected}!")
+        else:
             print("\nInvalid choice!")
-            time.sleep(1)
+
+        time.sleep(1.5)
     
     def _add_to_cart(self):
         self._clear()
@@ -337,10 +363,26 @@ class TechHouseApp:
             appliance = self.database.get_appliance(app_id)
             
             if appliance and appliance["status"] == "Available":
-                self.cart.add_item(appliance)
-                print(f"\n✓ {appliance['name']} added to cart!")
+                qty_str = input("Quantity (default 1): ").strip()
+                if qty_str == "":
+                    qty = 1
+                elif qty_str.isdigit():
+                    qty = int(qty_str)
+                else:
+                    print("\nInvalid quantity!")
+                    time.sleep(1.5)
+                    return
+
+                if qty <= 0:
+                    print("\nQuantity must be at least 1!")
+                    time.sleep(1.5)
+                    return
+
+                self.cart.add_item(appliance, qty)
+                print(f"\n✓ Added {qty} x {appliance['name']} to cart!")
             else:
                 print("\nInvalid product ID or product unavailable!")
+
         
         time.sleep(1.5)
     
@@ -365,7 +407,34 @@ class TechHouseApp:
             
             print("-" * 70)
             print(f"GRAND TOTAL: {self._fmt(total_with_delivery)}")
-        
+        while True:
+            print("\nCART EDIT")
+            print("1. Set quantity (replace)")
+            print("2. Remove quantity (decrease)")
+            print("3. Remove item")
+            print("0. Done")
+
+            c = input("Select: ").strip()
+            if c == "0":
+                break
+
+            pid = input("Enter product ID: ").strip()
+            if not pid.isdigit():
+                print("Invalid ID!")
+                continue
+            pid = int(pid)
+
+            if c == "1":
+                q = input("Set quantity to: ").strip()
+                if q.isdigit():
+                    self.cart.set_quantity(pid, int(q))
+            elif c == "2":
+                q = input("Remove how many?: ").strip()
+                if q.isdigit():
+                    self.cart.remove_quantity(pid, int(q))
+            elif c == "3":
+                self.cart.remove_item(pid)
+
         input("\nPress ENTER...")
     
     def _checkout(self):
@@ -441,6 +510,14 @@ class TechHouseApp:
         print(f"Schedule: {delivery_msg}")
         print(f"Fee: {self._fmt(current_delivery_fee) if current_delivery_fee > 0 else 'FREE'}")
         print("-" * 70)
+        original_subtotal = self.cart.get_total(None)
+        savings = original_subtotal - discounted_subtotal
+        if savings > 0:
+            print(f"Subtotal (before discount): {self._fmt(original_subtotal)}")
+            print(f"Subtotal (after discount):  {self._fmt(discounted_subtotal)}")
+            print(f"You save:                 {self._fmt(savings)}")
+        else:
+            print(f"Subtotal: {self._fmt(discounted_subtotal)}")
         print(f"TOTAL TO PAY: {self._fmt(final_total)}")
         print("=" * 70)
         
