@@ -7,6 +7,7 @@ from auth import AuthSystem
 
 
 class TechHouseApp:
+    """Main application for Tech House - Home Appliance Store"""
     
     DELIVERY_FEE = 50000
     
@@ -16,67 +17,100 @@ class TechHouseApp:
         self.auth = AuthSystem()
     
     def run(self):
+        """Start the application"""
         self._clear()
         print("=" * 70)
         print("WELCOME TO TECH HOUSE - Home Appliance Store")
         print("=" * 70)
+        print("\nYour one-stop shop for quality home appliances!")
         input("\nPress ENTER to continue...")
         self._auth_menu()
     
     def _auth_menu(self):
+        """Authentication menu for login/register"""
         while True:
             self._clear()
             print("=" * 70)
-            print("TECH HOUSE\n" + "=" * 70)
-            print("\n1. Login\n2. Register\n3. Continue as guest\n0. Exit")
+            print("TECH HOUSE")
+            print("=" * 70)
+            print("\n1. Login")
+            print("2. Register")
+            print("3. Continue as guest")
+            print("0. Exit")
             
             choice = input("\nSelect: ").strip()
             
-            if choice == "1" and self._login():
-                self._main_menu()
+            if choice == "1":
+                if self._login():
+                    self._main_menu()
             elif choice == "2":
                 self._register()
             elif choice == "3":
+                print("\nEntering as guest...")
+                time.sleep(1)
                 self._main_menu()
             elif choice == "0":
                 self._exit()
                 break
+            else:
+                print("\nInvalid choice!")
+                time.sleep(1)
     
     def _login(self):
+        """Handle user login"""
         self._clear()
-        print("=" * 70 + "\nLOGIN\n" + "=" * 70)
+        print("=" * 70)
+        print("LOGIN")
+        print("=" * 70)
         
         username = input("\nUsername: ").strip()
         password = input("Password: ").strip()
         
         success, msg = self.auth.login(username, password)
         print(f"\n{msg}")
-        time.sleep(1)
+        time.sleep(1.5)
         return success
     
     def _register(self):
+        """Handle user registration"""
         self._clear()
-        print("=" * 70 + "\nREGISTER\n" + "=" * 70)
+        print("=" * 70)
+        print("REGISTER")
+        print("=" * 70)
         
         username = input("\nUsername: ").strip()
         password = input("Password: ").strip()
+        confirm_password = input("Confirm Password: ").strip()
+        
+        if password != confirm_password:
+            print("\nPasswords do not match!")
+            time.sleep(1.5)
+            return
         
         success, msg = self.auth.register(username, password)
         print(f"\n{msg}")
-        time.sleep(1)
+        
+        if success:
+            print("You can now login with your credentials.")
+        
+        time.sleep(2)
     
     def _main_menu(self):
+        """Main application menu"""
         menu_actions = {
             "1": self._view_by_category,
             "2": self._search_products,
-            "3": self._view_membership,
-            "4": self._set_membership,
-            "5": self._add_to_cart,
-            "6": self._view_cart,
-            "7": self._checkout,
-            "8": self._check_admin_status,
-            "9": self._add_product,
-            "10": self._make_admin,
+            "3": self._view_all_products,
+            "4": self._view_membership,
+            "5": self._set_membership,
+            "6": self._add_to_cart,
+            "7": self._view_cart,
+            "8": self._checkout,
+            "9": self._check_admin_status,
+            "10": self._view_purchase_history,
+            "11": self._set_delivery_address,
+            "12": self._add_product,
+            "13": self._make_admin,
         }
         
         while True:
@@ -85,126 +119,253 @@ class TechHouseApp:
             choice = input("\nSelect: ").strip()
             
             if choice == "0":
-                self._exit()
+                self.auth.logout()
+                print("\nReturning to main menu...")
+                time.sleep(1)
                 break
             elif choice == "99":
-                if self.auth.get_current_user():
-                    self.auth.logout()
-                    print("\nLogged out")
-                    time.sleep(1)
-                    break
+                self._exit_app()
+                return
             elif choice in menu_actions:
                 menu_actions[choice]()
+            else:
+                print("\nInvalid choice!")
+                time.sleep(1)
     
     def _show_main_header(self):
-        print("=" * 70 + "\nMAIN MENU\n" + "=" * 70)
+        """Display main menu header"""
+        print("=" * 70)
+        print("MAIN MENU")
+        print("=" * 70)
         
         user = self.auth.get_current_user()
         if user:
-            print(f"\nLogged in: {user['username']}")
+            print(f"\nLogged in as: {user['username']} ({user['role']})")
             if user.get('membership'):
-                print(f"Membership: {user['membership']}")
+                package = Membership.get_package_info(user['membership'])
+                print(f"Membership: {user['membership']} ({package['discount']}% discount)")
+            print(f"Total Purchases: {user.get('total_purchases', 0)}")
+            if user.get('delivery_address'):
+                address = user['delivery_address']
+                # Truncate long addresses
+                if len(address) > 40:
+                    address = address[:37] + "..."
+                print(f"Delivery Address: {address}")
         else:
-            print("\nGuest Mode")
+            print("\nGuest Mode (Login to access membership benefits)")
         
         print(f"Cart: {self.cart.get_item_count()} items")
-        print("\n1. View by category\n2. Search\n3. View membership")
-        print("4. Set membership\n5. Add to cart\n6. View cart\n7. Checkout")
+        
+        print("\n--- SHOPPING ---")
+        print("1. View by category")
+        print("2. Search products")
+        print("3. View all products")
+        print("4. View membership packages")
+        print("5. Set membership")
+        print("6. Add to cart")
+        print("7. View cart")
+        print("8. Checkout")
         
         if user:
-            print("8. Check admin status")
+            print("\n--- ACCOUNT ---")
+            print("9. Check admin status")
+            print("10. View purchase history")
+            print("11. Set delivery address")
+            
             if self.auth.is_admin():
-                print("9. [ADMIN] Add product\n10. [ADMIN] Make user admin")
-            print("99. Logout")
-        print("0. Exit")
+                print("\n--- ADMIN ---")
+                print("12. Add product")
+                print("13. Make user admin")
+        
+        print("\n0. Back/Logout")
+        print("99. Exit Application")
     
     def _view_by_category(self):
         """View products by category"""
         self._clear()
-        print("=" * 70 + "\nCATEGORIES\n" + "=" * 70)
+        print("=" * 70)
+        print("CATEGORIES")
+        print("=" * 70)
         
         categories = self.database.get_all_categories()
-        for i, cat in enumerate(categories, 1):
-            print(f"{i}. {cat}")
         
-        choice = input("\nSelect (0 to cancel): ").strip()
+        if not categories:
+            print("\nNo categories available")
+            input("\nPress ENTER...")
+            return
+        
+        for i, category in enumerate(categories, 1):
+            print(f"{i}. {category}")
+        
+        choice = input("\nSelect category (0 to cancel): ").strip()
         
         if choice.isdigit() and choice != "0":
             idx = int(choice) - 1
             if 0 <= idx < len(categories):
                 self._show_category_products(categories[idx])
+            else:
+                print("\nInvalid category!")
+                time.sleep(1)
         
         input("\nPress ENTER...")
     
     def _show_category_products(self, category):
+        """Display products in a category"""
         appliances = self.database.get_appliances_by_category(category)
-        print(f"\n{category}\n" + "-" * 70)
+        
+        print(f"\n{category}")
+        print("-" * 70)
+        
+        if not appliances:
+            print("\nNo products available in this category")
+            return
+        
         for app in appliances:
-            print(f"ID: {app['id']} | {app['name']} | {self._fmt(app['price'])}")
+            print(f"ID: {app['id']:>3} | {app['name']:<30} | {self._fmt(app['price'])}")
     
     def _search_products(self):
+        """Search for products"""
         self._clear()
-        print("=" * 70 + "\nSEARCH\n" + "=" * 70)
+        print("=" * 70)
+        print("SEARCH PRODUCTS")
+        print("=" * 70)
         
-        keyword = input("\nKeyword: ").strip()
+        keyword = input("\nEnter keyword: ").strip()
+        
+        if not keyword:
+            print("\nPlease enter a search term")
+            input("\nPress ENTER...")
+            return
+        
         results = self.database.search_appliances(keyword)
         
-        print(f"\nResults for '{keyword}':\n" + "-" * 70)
+        print(f"\nSearch results for '{keyword}':")
+        print("-" * 70)
         
         if results:
             for app in results:
-                print(f"ID: {app['id']} | {app['name']} | {self._fmt(app['price'])}")
+                print(f"ID: {app['id']:>3} | {app['name']:<30} | {self._fmt(app['price'])}")
+            print(f"\nFound {len(results)} product(s)")
         else:
-            print("No products found")
+            print("\nNo products found")
         
+        input("\nPress ENTER...")
+    
+    def _view_all_products(self):
+        """View all available products"""
+        self._clear()
+        print("=" * 70)
+        print("ALL AVAILABLE PRODUCTS")
+        print("=" * 70)
+        
+        appliances = self.database.get_available_appliances()
+        
+        if not appliances:
+            print("\nNo products available")
+            input("\nPress ENTER...")
+            return
+        
+        # Group by category
+        categories = {}
+        for app in appliances:
+            cat = app["category"]
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(app)
+        
+        for category in sorted(categories.keys()):
+            print(f"\n{category}")
+            print("-" * 70)
+            for app in categories[category]:
+                print(f"ID: {app['id']:>3} | {app['name']:<30} | {self._fmt(app['price'])}")
+        
+        print(f"\nTotal products: {len(appliances)}")
         input("\nPress ENTER...")
     
     def _view_membership(self):
+        """View membership packages"""
         self._clear()
         Membership.display_packages()
+        
+        user = self.auth.get_current_user()
+        if user and user.get('membership'):
+            print(f"\nYour current membership: {user['membership']}")
+        elif not user:
+            print("\nLogin to access membership benefits!")
+        
         input("\nPress ENTER...")
     
     def _set_membership(self):
+        """Set user membership package"""
         user = self.auth.get_current_user()
         if not user:
-            print("\nPlease login first")
-            time.sleep(1)
+            print("\nPlease login first to access membership!")
+            time.sleep(1.5)
             return
         
         self._clear()
-        print("=" * 70 + "\nSELECT MEMBERSHIP\n" + "=" * 70)
-        print("\n1. Bronze (5%)\n2. Silver (10%)\n3. Gold (15% + Free delivery)\n0. Cancel")
+        print("=" * 70)
+        print("SELECT MEMBERSHIP")
+        print("=" * 70)
+        
+        if user.get('membership'):
+            print(f"\nCurrent membership: {user['membership']}")
+        
+        print("\n1. Bronze (5% discount)")
+        print("2. Silver (10% discount)")
+        print("3. Gold (15% discount + Free delivery)")
+        print("0. Cancel")
         
         choice = input("\nSelect: ").strip()
         packages = {1: "Bronze", 2: "Silver", 3: "Gold"}
         
         if choice.isdigit() and int(choice) in packages:
-            user['membership'] = packages[int(choice)]
-            print(f"\nMembership set to {user['membership']}")
+            selected = packages[int(choice)]
+            user['membership'] = selected
+            # Update in auth system
+            self.auth.users[user['username']]['membership'] = selected
+            print(f"\nMembership successfully set to {selected}!")
+            time.sleep(1.5)
+        elif choice != "0":
+            print("\nInvalid choice!")
             time.sleep(1)
     
     def _add_to_cart(self):
+        """Add product to cart"""
         self._clear()
-        print("=" * 70 + "\nADD TO CART\n" + "=" * 70)
+        print("=" * 70)
+        print("ADD TO CART")
+        print("=" * 70)
         
-        for app in self.database.get_available_appliances():
-            print(f"ID: {app['id']} | {app['name']} | {self._fmt(app['price'])}")
+        appliances = self.database.get_available_appliances()
         
-        app_id = input("\nEnter ID (0 to cancel): ").strip()
+        if not appliances:
+            print("\nNo products available")
+            input("\nPress ENTER...")
+            return
+        
+        # Display available products
+        for app in appliances:
+            print(f"ID: {app['id']:>3} | {app['name']:<30} | {self._fmt(app['price'])}")
+        
+        app_id = input("\nEnter product ID (0 to cancel): ").strip()
         
         if app_id.isdigit() and app_id != "0":
             app_id = int(app_id)
-            appliance = self.database.appliances.get(app_id)
+            appliance = self.database.get_appliance(app_id)
+            
             if appliance and appliance["status"] == "Available":
                 self.cart.add_item(appliance)
-                print(f"\n{appliance['name']} added")
+                print(f"\n✓ {appliance['name']} added to cart!")
             else:
-                print("\nInvalid or unavailable")
+                print("\nInvalid product ID or product unavailable!")
         
-        time.sleep(1)
+        time.sleep(1.5)
     
     def _view_cart(self):
+        """View shopping cart"""
         self._clear()
+        
         user = self.auth.get_current_user()
         membership = user.get('membership') if user else None
         
@@ -213,128 +374,433 @@ class TechHouseApp:
         if not self.cart.is_empty():
             print("\n" + "=" * 70)
             if membership and Membership.has_free_delivery(membership):
-                print("Delivery: FREE")
+                print("Delivery: FREE (Gold membership benefit)")
             else:
                 print(f"Delivery: {self._fmt(self.DELIVERY_FEE)}")
+            
+            total_with_delivery = self.cart.get_total(membership)
+            if not (membership and Membership.has_free_delivery(membership)):
+                total_with_delivery += self.DELIVERY_FEE
+            
+            print("-" * 70)
+            print(f"GRAND TOTAL: {self._fmt(total_with_delivery)}")
         
         input("\nPress ENTER...")
     
     def _checkout(self):
+        """Checkout and complete purchase"""
         if self.cart.is_empty():
-            print("\nCart is empty")
+            print("\nYour cart is empty!")
             time.sleep(1)
             return
         
         user = self.auth.get_current_user()
-        if not user:
-            print("\nPlease login first")
-            time.sleep(1)
-            return
+        membership = user.get('membership') if user else None
+        
+        # Get delivery address
+        delivery_address = None
+        if user:
+            delivery_address = user.get('delivery_address')
+        
+        if not delivery_address:
+            self._clear()
+            print("=" * 70)
+            print("DELIVERY ADDRESS")
+            print("=" * 70)
+            print("\nPlease enter your delivery address:")
+            street = input("Street/Building: ").strip()
+            district = input("District: ").strip()
+            city = input("City: ").strip()
+            
+            if not street or not city:
+                print("\nAddress incomplete! Checkout cancelled.")
+                time.sleep(2)
+                return
+            
+            delivery_address = f"{street}, {district}, {city}"
+            
+            if user:
+                # Save address for future
+                save = input("\nSave this address for future orders? (yes/no): ").strip().lower()
+                if save == "yes" or save == "y":
+                    self.auth.set_delivery_address(user['username'], delivery_address)
+                    print("✓ Address saved!")
+                    time.sleep(1)
         
         self._clear()
-        print("=" * 70 + "\nCHECKOUT\n" + "=" * 70)
+        print("=" * 70)
+        print("CHECKOUT SUMMARY")
+        print("=" * 70)
         
-        membership = user.get('membership')
+        # Display cart
         self.cart.display(membership)
         
-        subtotal = self.cart.get_total(membership)
-        delivery = 0 if (membership and Membership.has_free_delivery(membership)) else self.DELIVERY_FEE
-        total = subtotal + delivery
+        # Calculate totals
+        original_subtotal = self.cart.get_total(None)
+        discounted_subtotal = self.cart.get_total(membership)
+        savings = original_subtotal - discounted_subtotal
         
+        delivery = 0
+        if membership and Membership.has_free_delivery(membership):
+            delivery = 0
+        else:
+            delivery = self.DELIVERY_FEE
+        
+        final_total = discounted_subtotal + delivery
+        
+        # Display pricing summary
         print("\n" + "=" * 70)
-        print(f"Subtotal: {self._fmt(subtotal)}")
-        if delivery > 0:
-            print(f"Delivery: {self._fmt(delivery)}")
-        print(f"TOTAL: {self._fmt(total)}")
+        print("PRICING SUMMARY")
+        print("-" * 70)
         
-        if input("\nConfirm? (yes/no): ").strip().lower() == "yes":
-            for item in self.cart.items.values():
-                self.database.update_appliance_status(item["appliance"]["id"], "Sold")
-            self.auth.add_purchase(user['username'])
+        if savings > 0:
+            print(f"Original Subtotal:     {self._fmt(original_subtotal)}")
+            print(f"Membership Savings:   -{self._fmt(savings)}")
+            print(f"Discounted Subtotal:   {self._fmt(discounted_subtotal)}")
+        else:
+            print(f"Subtotal:              {self._fmt(discounted_subtotal)}")
+        
+        if delivery > 0:
+            print(f"Delivery Fee:          {self._fmt(delivery)}")
+        else:
+            print(f"Delivery Fee:          FREE")
+        
+        print("-" * 70)
+        print(f"TOTAL TO PAY:          {self._fmt(final_total)}")
+        print("=" * 70)
+        
+        # Display delivery address
+        print(f"\nDelivery Address: {delivery_address}")
+        
+        # Confirm purchase
+        confirm = input("\nConfirm purchase? (yes/no): ").strip().lower()
+        
+        if confirm == "yes" or confirm == "y":
+            # Prepare purchase items for history
+            purchase_items = []
+            for item in self.cart.get_items().values():
+                appliance = item["appliance"]
+                purchase_items.append({
+                    "name": appliance["name"],
+                    "quantity": item["quantity"],
+                    "unit_price": appliance["price"],
+                    "total_price": appliance["price"] * item["quantity"]
+                })
+                
+                # Mark item as sold
+                self.database.update_appliance_status(appliance["id"], "Sold")
+            
+            # Record sale in database
+            from datetime import datetime
+            username = user['username'] if user else "Guest"
+            self.database.add_sale(
+                username=username,
+                items=purchase_items,
+                total_amount=final_total,
+                delivery_address=delivery_address,
+                delivery_fee=delivery,
+                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+            
+            # Add purchase count if user is logged in
+            if user:
+                self.auth.add_purchase(user['username'])
+                purchases = user.get('total_purchases', 0)
+                print(f"\n✓ ORDER COMPLETED!")
+                print(f"Order will be delivered to: {delivery_address}")
+                print(f"Total purchases: {purchases}")
+                
+                if purchases >= 5 and user['role'] != 'admin':
+                    print("\n🎉 Congratulations! You're eligible for admin promotion!")
+                    print("Ask an admin to promote you using option 13.")
+            else:
+                print("\n✓ ORDER COMPLETED!")
+                print(f"Order will be delivered to: {delivery_address}")
+            
             self.cart.clear()
-            print(f"\n[SUCCESS] Order completed! Total purchases: {user.get('total_purchases', 0)}")
+            print("\nThank you for shopping with Tech House!")
         else:
             print("\nOrder cancelled")
         
-        time.sleep(2)
+        time.sleep(3)
     
     def _check_admin_status(self):
+        """Check admin promotion eligibility"""
         user = self.auth.get_current_user()
         if not user:
-            return
-        
-        self._clear()
-        print("=" * 70 + "\nADMIN STATUS\n" + "=" * 70)
-        
-        if user["role"] == "admin":
-            print("\nYou are already an admin!")
-        else:
-            print(f"\nRole: {user['role']}")
-            print(f"Purchases: {user.get('total_purchases', 0)}/5")
-            can_upgrade, msg = self.auth.can_become_admin(user['username'])
-            print(f"\n{msg}")
-            if can_upgrade:
-                print("\nAsk current admin to use option 10!")
-        
-        input("\nPress ENTER...")
-    
-    def _add_product(self):
-        if not self.auth.is_admin():
-            return
-        
-        self._clear()
-        print("=" * 70 + "\n[ADMIN] ADD PRODUCT\n" + "=" * 70)
-        
-        name = input("\nName: ").strip()
-        price = input("Price: ").strip()
-        
-        if not name or not price.isdigit():
-            print("\nInvalid input")
+            print("\nPlease login first!")
             time.sleep(1)
             return
         
-        categories = self.database.get_all_categories()
-        for i, cat in enumerate(categories, 1):
-            print(f"{i}. {cat}")
+        self._clear()
+        print("=" * 70)
+        print("ADMIN STATUS")
+        print("=" * 70)
         
-        cat_choice = input("\nSelect category: ").strip()
+        print(f"\nUsername: {user['username']}")
+        print(f"Current Role: {user['role']}")
+        print(f"Total Purchases: {user.get('total_purchases', 0)}")
         
-        if cat_choice.isdigit():
-            idx = int(cat_choice) - 1
-            if 0 <= idx < len(categories):
-                app_id = self.database.add_appliance(name, int(price), "Available", categories[idx])
-                print(f"\nAdded with ID: {app_id}")
-                time.sleep(2)
+        if user["role"] == "admin":
+            print("\n✓ You are already an admin!")
+        else:
+            can_upgrade, msg = self.auth.can_become_admin(user['username'])
+            print(f"\nStatus: {msg}")
+            
+            if can_upgrade:
+                print("\n🎉 You are eligible for admin promotion!")
+                print("Ask the current admin to promote you using option 13 in the main menu.")
+            else:
+                remaining = 5 - user.get('total_purchases', 0)
+                print(f"\nComplete {remaining} more purchase(s) to become eligible.")
+        
+        input("\nPress ENTER...")
     
-    def _make_admin(self):
-        if not self.auth.is_admin():
+    def _view_purchase_history(self):
+        """View user's purchase history"""
+        user = self.auth.get_current_user()
+        if not user:
+            print("\nPlease login first!")
+            time.sleep(1)
             return
         
         self._clear()
-        print("=" * 70 + "\n[ADMIN] MAKE USER ADMIN\n" + "=" * 70)
+        print("=" * 70)
+        print("PURCHASE HISTORY")
+        print("=" * 70)
         
-        print("\nUsers:")
-        for username, user in self.auth.users.items():
+        purchases = self.database.get_user_purchases(user['username'])
+        
+        if not purchases:
+            print("\nYou haven't made any purchases yet.")
+            print("Start shopping to build your purchase history!")
+            input("\nPress ENTER...")
+            return
+        
+        print(f"\nTotal Orders: {len(purchases)}")
+        print("=" * 70)
+        
+        for i, sale in enumerate(purchases, 1):
+            print(f"\nOrder #{sale['id']} - {sale['date']}")
+            print("-" * 70)
+            
+            # Display items
+            print(f"{'Item':<30} {'Qty':>5} {'Unit Price':>15} {'Total':>15}")
+            print("-" * 70)
+            
+            for item in sale['items']:
+                print(f"{item['name']:<30} {item['quantity']:>5} "
+                      f"{self._fmt(item['unit_price']):>15} "
+                      f"{self._fmt(item['total_price']):>15}")
+            
+            print("-" * 70)
+            print(f"Delivery Fee: {self._fmt(sale['delivery_fee']) if sale['delivery_fee'] > 0 else 'FREE'}")
+            print(f"Total Amount: {self._fmt(sale['total_amount'])}")
+            print(f"Delivered to: {sale['delivery_address']}")
+            
+            if i < len(purchases):
+                print("\n" + "=" * 70)
+        
+        input("\nPress ENTER...")
+    
+    def _set_delivery_address(self):
+        """Set or update delivery address"""
+        user = self.auth.get_current_user()
+        if not user:
+            print("\nPlease login first!")
+            time.sleep(1)
+            return
+        
+        self._clear()
+        print("=" * 70)
+        print("DELIVERY ADDRESS")
+        print("=" * 70)
+        
+        current_address = user.get('delivery_address')
+        if current_address:
+            print(f"\nCurrent Address: {current_address}")
+            update = input("\nUpdate address? (yes/no): ").strip().lower()
+            if update != "yes" and update != "y":
+                return
+        
+        print("\nEnter your delivery address:")
+        street = input("Street/Building: ").strip()
+        district = input("District: ").strip()
+        city = input("City: ").strip()
+        postal = input("Postal Code (optional): ").strip()
+        phone = input("Phone Number: ").strip()
+        
+        if not street or not city:
+            print("\nStreet and City are required!")
+            time.sleep(1.5)
+            return
+        
+        # Build address string
+        address_parts = [street]
+        if district:
+            address_parts.append(district)
+        address_parts.append(city)
+        if postal:
+            address_parts.append(postal)
+        if phone:
+            address_parts.append(f"Tel: {phone}")
+        
+        full_address = ", ".join(address_parts)
+        
+        # Save address
+        self.auth.set_delivery_address(user['username'], full_address)
+        
+        print("\n✓ Delivery address saved successfully!")
+        print(f"\n{full_address}")
+        time.sleep(2)
+    
+    def _add_product(self):
+        """Admin: Add new product"""
+        if not self.auth.is_admin():
+            print("\nAdmin access required!")
+            time.sleep(1)
+            return
+        
+        self._clear()
+        print("=" * 70)
+        print("[ADMIN] ADD PRODUCT")
+        print("=" * 70)
+        
+        name = input("\nProduct name: ").strip()
+        price_str = input("Price (UZS): ").strip()
+        
+        if not name:
+            print("\nProduct name cannot be empty!")
+            time.sleep(1)
+            return
+        
+        if not price_str.isdigit():
+            print("\nInvalid price!")
+            time.sleep(1)
+            return
+        
+        price = int(price_str)
+        if price <= 0:
+            print("\nPrice must be greater than 0!")
+            time.sleep(1)
+            return
+        
+        # Select category
+        categories = self.database.get_all_categories()
+        print("\nSelect category:")
+        for i, cat in enumerate(categories, 1):
+            print(f"{i}. {cat}")
+        print(f"{len(categories) + 1}. Create new category")
+        
+        cat_choice = input("\nSelect: ").strip()
+        
+        if not cat_choice.isdigit():
+            print("\nInvalid choice!")
+            time.sleep(1)
+            return
+        
+        cat_idx = int(cat_choice) - 1
+        
+        if cat_idx == len(categories):
+            # Create new category
+            category = input("Enter new category name: ").strip()
+            if not category:
+                print("\nCategory name cannot be empty!")
+                time.sleep(1)
+                return
+        elif 0 <= cat_idx < len(categories):
+            category = categories[cat_idx]
+        else:
+            print("\nInvalid choice!")
+            time.sleep(1)
+            return
+        
+        # Add the appliance
+        app_id = self.database.add_appliance(name, price, "Available", category)
+        print(f"\n✓ Product added successfully!")
+        print(f"Product ID: {app_id}")
+        print(f"Name: {name}")
+        print(f"Price: {self._fmt(price)}")
+        print(f"Category: {category}")
+        
+        time.sleep(3)
+    
+    def _make_admin(self):
+        """Admin: Promote user to admin"""
+        if not self.auth.is_admin():
+            print("\nAdmin access required!")
+            time.sleep(1)
+            return
+        
+        self._clear()
+        print("=" * 70)
+        print("[ADMIN] MAKE USER ADMIN")
+        print("=" * 70)
+        
+        # Display users
+        print("\nRegistered Users:")
+        print("-" * 70)
+        
+        users = self.auth.get_all_users()
+        eligible_users = []
+        
+        for username, user in users.items():
             if username != "admin":
-                print(f"- {username} (Role: {user['role']}, Purchases: {user.get('total_purchases', 0)})")
+                purchases = user.get('total_purchases', 0)
+                status = "✓ Eligible" if purchases >= 5 else f"{5-purchases} more needed"
+                if user['role'] != 'admin':
+                    print(f"• {username:<20} | Purchases: {purchases} | {status}")
+                    if purchases >= 5:
+                        eligible_users.append(username)
+                else:
+                    print(f"• {username:<20} | Already Admin")
         
-        username = input("\nUsername: ").strip()
-        password = input("Admin password: ").strip()
+        if not eligible_users:
+            print("\nNo eligible users for promotion")
+            input("\nPress ENTER...")
+            return
+        
+        print(f"\nEligible users: {', '.join(eligible_users)}")
+        
+        username = input("\nEnter username to promote: ").strip()
+        
+        if username not in users:
+            print("\nUser not found!")
+            time.sleep(1)
+            return
+        
+        password = input("Enter admin password: ").strip()
         
         success, msg = self.auth.make_admin(username, password)
+        
         print(f"\n{msg}")
         time.sleep(2)
     
-    def _exit(self):
+    def _exit_app(self):
+        """Exit application"""
         self._clear()
-        print("=" * 70 + "\nTHANK YOU FOR VISITING TECH HOUSE!\n" + "=" * 70)
+        print("=" * 70)
+        print("THANK YOU FOR VISITING TECH HOUSE!")
+        print("=" * 70)
+        print("\nWe hope to see you again soon!")
+        time.sleep(2)
+        exit(0)
+    
+    def _exit(self):
+        """Return to auth menu"""
+        self._clear()
+        print("=" * 70)
+        print("LOGGING OUT")
+        print("=" * 70)
         time.sleep(1)
     
     def _clear(self):
+        """Clear console screen"""
         os.system("cls" if os.name == "nt" else "clear")
     
     def _fmt(self, price):
-        return f"{price:,} UZS"
+        """Format price in UZS"""
+        return f"{int(price):,} UZS"
 
 
 if __name__ == "__main__":
