@@ -8,7 +8,6 @@ class AuthSystem:
     def __init__(self):
         self.users = {}
         self.current_user = None
-        # Initialize default admin user
         self.users["admin"] = {
             "username": "admin",
             "password": self._hash_password("admin123"),
@@ -18,7 +17,6 @@ class AuthSystem:
         }
     
     def _hash_password(self, password):
-        """Hash password using SHA-256"""
         return hashlib.sha256(password.encode()).hexdigest()
     
     def register(self, username, password):
@@ -43,7 +41,6 @@ class AuthSystem:
         return True, "Registration successful"
     
     def login(self, username, password):
-        """Login user with username and password"""
         if not username or not password:
             return False, "Username and password cannot be empty"
         
@@ -58,7 +55,6 @@ class AuthSystem:
         return True, f"Welcome back, {username}!"
     
     def logout(self):
-        """Logout current user"""
         if self.current_user:
             username = self.current_user["username"]
             self.current_user = None
@@ -66,32 +62,26 @@ class AuthSystem:
         return False, "No user logged in"
     
     def is_admin(self):
-        """Check if current user is admin"""
         return self.current_user and self.current_user.get("role") == "admin"
     
     def is_logged_in(self):
-        """Check if any user is logged in"""
         return self.current_user is not None
     
     def get_current_user(self):
-        """Get current logged in user"""
         return self.current_user
     
     def add_purchase(self, username):
-        """Add purchase count for user"""
         if username in self.users:
             if "total_purchases" not in self.users[username]:
                 self.users[username]["total_purchases"] = 0
             self.users[username]["total_purchases"] += 1
             
-            # Update current user if it's them
             if self.current_user and self.current_user["username"] == username:
                 self.current_user["total_purchases"] = self.users[username]["total_purchases"]
             return True
         return False
     
     def can_become_admin(self, username):
-        """Check if user can become admin"""
         if username not in self.users:
             return False, "User not found"
         
@@ -108,8 +98,6 @@ class AuthSystem:
             return False, f"Need {5 - total_purchases} more purchases to be eligible"
     
     def make_admin(self, username, admin_password):
-        """Promote user to admin role"""
-        # Verify admin password
         if self._hash_password(admin_password) != self.users["admin"]["password"]:
             return False, "Invalid admin password"
         
@@ -130,7 +118,6 @@ class AuthSystem:
         
         user["role"] = "admin"
         
-        # Update current user if it's them
         if self.current_user and self.current_user["username"] == username:
             self.current_user["role"] = "admin"
         
@@ -144,14 +131,12 @@ class AuthSystem:
         """Set delivery address for user"""
         if username in self.users:
             self.users[username]["delivery_address"] = address
-            # Update current user if it's them
             if self.current_user and self.current_user["username"] == username:
                 self.current_user["delivery_address"] = address
             return True
         return False
     
     def get_delivery_address(self, username):
-        """Get user's delivery address"""
         if username in self.users:
             return self.users[username].get("delivery_address")
         return None

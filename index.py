@@ -7,7 +7,6 @@ from auth import AuthSystem
 
 
 class TechHouseApp:
-    """Main application for Tech House - Home Appliance Store"""
     
     DELIVERY_FEE = 50000
     
@@ -17,7 +16,6 @@ class TechHouseApp:
         self.auth = AuthSystem()
     
     def run(self):
-        """Start the application"""
         self._clear()
         print("=" * 70)
         print("WELCOME TO TECH HOUSE - Home Appliance Store")
@@ -27,7 +25,6 @@ class TechHouseApp:
         self._auth_menu()
     
     def _auth_menu(self):
-        """Authentication menu for login/register"""
         while True:
             self._clear()
             print("=" * 70)
@@ -57,7 +54,6 @@ class TechHouseApp:
                 time.sleep(1)
     
     def _login(self):
-        """Handle user login"""
         self._clear()
         print("=" * 70)
         print("LOGIN")
@@ -72,7 +68,6 @@ class TechHouseApp:
         return success
     
     def _register(self):
-        """Handle user registration"""
         self._clear()
         print("=" * 70)
         print("REGISTER")
@@ -96,7 +91,6 @@ class TechHouseApp:
         time.sleep(2)
     
     def _main_menu(self):
-        """Main application menu"""
         menu_actions = {
             "1": self._view_by_category,
             "2": self._search_products,
@@ -133,7 +127,6 @@ class TechHouseApp:
                 time.sleep(1)
     
     def _show_main_header(self):
-        """Display main menu header"""
         print("=" * 70)
         print("MAIN MENU")
         print("=" * 70)
@@ -147,7 +140,6 @@ class TechHouseApp:
             print(f"Total Purchases: {user.get('total_purchases', 0)}")
             if user.get('delivery_address'):
                 address = user['delivery_address']
-                # Truncate long addresses
                 if len(address) > 40:
                     address = address[:37] + "..."
                 print(f"Delivery Address: {address}")
@@ -181,7 +173,6 @@ class TechHouseApp:
         print("99. Exit Application")
     
     def _view_by_category(self):
-        """View products by category"""
         self._clear()
         print("=" * 70)
         print("CATEGORIES")
@@ -210,7 +201,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _show_category_products(self, category):
-        """Display products in a category"""
         appliances = self.database.get_appliances_by_category(category)
         
         print(f"\n{category}")
@@ -224,7 +214,6 @@ class TechHouseApp:
             print(f"ID: {app['id']:>3} | {app['name']:<30} | {self._fmt(app['price'])}")
     
     def _search_products(self):
-        """Search for products"""
         self._clear()
         print("=" * 70)
         print("SEARCH PRODUCTS")
@@ -252,7 +241,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _view_all_products(self):
-        """View all available products"""
         self._clear()
         print("=" * 70)
         print("ALL AVAILABLE PRODUCTS")
@@ -265,7 +253,6 @@ class TechHouseApp:
             input("\nPress ENTER...")
             return
         
-        # Group by category
         categories = {}
         for app in appliances:
             cat = app["category"]
@@ -283,7 +270,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _view_membership(self):
-        """View membership packages"""
         self._clear()
         Membership.display_packages()
         
@@ -296,7 +282,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _set_membership(self):
-        """Set user membership package"""
         user = self.auth.get_current_user()
         if not user:
             print("\nPlease login first to access membership!")
@@ -322,7 +307,6 @@ class TechHouseApp:
         if choice.isdigit() and int(choice) in packages:
             selected = packages[int(choice)]
             user['membership'] = selected
-            # Update in auth system
             self.auth.users[user['username']]['membership'] = selected
             print(f"\nMembership successfully set to {selected}!")
             time.sleep(1.5)
@@ -331,7 +315,6 @@ class TechHouseApp:
             time.sleep(1)
     
     def _add_to_cart(self):
-        """Add product to cart"""
         self._clear()
         print("=" * 70)
         print("ADD TO CART")
@@ -344,7 +327,6 @@ class TechHouseApp:
             input("\nPress ENTER...")
             return
         
-        # Display available products
         for app in appliances:
             print(f"ID: {app['id']:>3} | {app['name']:<30} | {self._fmt(app['price'])}")
         
@@ -363,7 +345,6 @@ class TechHouseApp:
         time.sleep(1.5)
     
     def _view_cart(self):
-        """View shopping cart"""
         self._clear()
         
         user = self.auth.get_current_user()
@@ -388,7 +369,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _checkout(self):
-        """Checkout and complete purchase"""
         if self.cart.is_empty():
             print("\nYour cart is empty!")
             time.sleep(1)
@@ -397,86 +377,76 @@ class TechHouseApp:
         user = self.auth.get_current_user()
         membership = user.get('membership') if user else None
         
-        # Get delivery address
-        delivery_address = None
-        if user:
-            delivery_address = user.get('delivery_address')
+        self._clear()
+        print("=" * 70)
+        print("FULFILLMENT METHOD")
+        print("=" * 70)
+        print("\n1. Store Pickup (Free)")
+        print("2. Home Delivery")
         
-        if not delivery_address:
-            self._clear()
-            print("=" * 70)
-            print("DELIVERY ADDRESS")
-            print("=" * 70)
-            print("\nPlease enter your delivery address:")
-            street = input("Street/Building: ").strip()
-            district = input("District: ").strip()
-            city = input("City: ").strip()
-            
-            if not street or not city:
-                print("\nAddress incomplete! Checkout cancelled.")
-                time.sleep(2)
-                return
-            
-            delivery_address = f"{street}, {district}, {city}"
-            
-            if user:
-                # Save address for future
-                save = input("\nSave this address for future orders? (yes/no): ").strip().lower()
-                if save == "yes" or save == "y":
-                    self.auth.set_delivery_address(user['username'], delivery_address)
-                    print("✓ Address saved!")
-                    time.sleep(1)
+        fulfillment_choice = input("\nSelect (1-2): ").strip()
+        is_delivery = fulfillment_choice == "2"
         
+        delivery_address = "STORE PICKUP"
+        current_delivery_fee = 0
+
+        if is_delivery:
+            current_delivery_fee = 0 if (membership and Membership.has_free_delivery(membership)) else self.DELIVERY_FEE
+            
+            delivery_address = user.get('delivery_address') if user else None
+            if not delivery_address:
+                print("\nPLEASE ENTER YOUR DELIVERY ADDRESS:")
+                street = input("Street/Building: ").strip()
+                district = input("District: ").strip()
+                city = input("City: ").strip()
+                
+                if not street or not city:
+                    print("\nAddress incomplete! Checkout cancelled.")
+                    time.sleep(2)
+                    return
+                
+                delivery_address = f"{street}, {district}, {city}"
+                
+                if user:
+                    save = input("\nSave this address for future orders? (yes/no): ").strip().lower()
+                    if save == "yes" or save == "y":
+                        self.auth.set_delivery_address(user['username'], delivery_address)
+
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        
+        if not is_delivery:
+            delivery_msg = "Ready for pickup in: 2 hours"
+        elif membership == "Gold":
+            delivery_time = now + timedelta(hours=5)
+            delivery_msg = f"Express Delivery by: {delivery_time.strftime('%H:%M Today')}"
+        elif membership == "Silver":
+            delivery_time = now + timedelta(days=1)
+            delivery_msg = f"Standard Delivery by: {delivery_time.strftime('%Y-%m-%d %H:%M')}"
+        else:
+            delivery_time = now + timedelta(days=3)
+            delivery_msg = f"Economy Delivery by: {delivery_time.strftime('%Y-%m-%d %H:%M')}"
+
         self._clear()
         print("=" * 70)
         print("CHECKOUT SUMMARY")
         print("=" * 70)
         
-        # Display cart
         self.cart.display(membership)
         
-        # Calculate totals
-        original_subtotal = self.cart.get_total(None)
         discounted_subtotal = self.cart.get_total(membership)
-        savings = original_subtotal - discounted_subtotal
+        final_total = discounted_subtotal + current_delivery_fee
         
-        delivery = 0
-        if membership and Membership.has_free_delivery(membership):
-            delivery = 0
-        else:
-            delivery = self.DELIVERY_FEE
-        
-        final_total = discounted_subtotal + delivery
-        
-        # Display pricing summary
-        print("\n" + "=" * 70)
-        print("PRICING SUMMARY")
+        print(f"\nMethod: {'Delivery' if is_delivery else 'Store Pickup'}")
+        print(f"Schedule: {delivery_msg}")
+        print(f"Fee: {self._fmt(current_delivery_fee) if current_delivery_fee > 0 else 'FREE'}")
         print("-" * 70)
-        
-        if savings > 0:
-            print(f"Original Subtotal:     {self._fmt(original_subtotal)}")
-            print(f"Membership Savings:   -{self._fmt(savings)}")
-            print(f"Discounted Subtotal:   {self._fmt(discounted_subtotal)}")
-        else:
-            print(f"Subtotal:              {self._fmt(discounted_subtotal)}")
-        
-        if delivery > 0:
-            print(f"Delivery Fee:          {self._fmt(delivery)}")
-        else:
-            print(f"Delivery Fee:          FREE")
-        
-        print("-" * 70)
-        print(f"TOTAL TO PAY:          {self._fmt(final_total)}")
+        print(f"TOTAL TO PAY: {self._fmt(final_total)}")
         print("=" * 70)
         
-        # Display delivery address
-        print(f"\nDelivery Address: {delivery_address}")
-        
-        # Confirm purchase
         confirm = input("\nConfirm purchase? (yes/no): ").strip().lower()
         
         if confirm == "yes" or confirm == "y":
-            # Prepare purchase items for history
             purchase_items = []
             for item in self.cart.get_items().values():
                 appliance = item["appliance"]
@@ -486,46 +456,29 @@ class TechHouseApp:
                     "unit_price": appliance["price"],
                     "total_price": appliance["price"] * item["quantity"]
                 })
-                
-                # Mark item as sold
                 self.database.update_appliance_status(appliance["id"], "Sold")
             
-            # Record sale in database
-            from datetime import datetime
             username = user['username'] if user else "Guest"
             self.database.add_sale(
                 username=username,
                 items=purchase_items,
                 total_amount=final_total,
                 delivery_address=delivery_address,
-                delivery_fee=delivery,
-                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                delivery_fee=current_delivery_fee,
+                date=f"{now.strftime('%Y-%m-%d %H:%M:%S')} (Est. Arrival: {delivery_msg})"
             )
             
-            # Add purchase count if user is logged in
-            if user:
-                self.auth.add_purchase(user['username'])
-                purchases = user.get('total_purchases', 0)
-                print(f"\n✓ ORDER COMPLETED!")
-                print(f"Order will be delivered to: {delivery_address}")
-                print(f"Total purchases: {purchases}")
-                
-                if purchases >= 5 and user['role'] != 'admin':
-                    print("\n🎉 Congratulations! You're eligible for admin promotion!")
-                    print("Ask an admin to promote you using option 13.")
-            else:
-                print("\n✓ ORDER COMPLETED!")
-                print(f"Order will be delivered to: {delivery_address}")
+            if user: self.auth.add_purchase(user['username'])
             
+            print(f"\n✓ ORDER COMPLETED AT {now.strftime('%H:%M:%S')}!")
+            print(f"Fulfillment: {delivery_msg}")
             self.cart.clear()
-            print("\nThank you for shopping with Tech House!")
         else:
             print("\nOrder cancelled")
         
         time.sleep(3)
     
     def _check_admin_status(self):
-        """Check admin promotion eligibility"""
         user = self.auth.get_current_user()
         if not user:
             print("\nPlease login first!")
@@ -557,7 +510,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _view_purchase_history(self):
-        """View user's purchase history"""
         user = self.auth.get_current_user()
         if not user:
             print("\nPlease login first!")
@@ -584,7 +536,6 @@ class TechHouseApp:
             print(f"\nOrder #{sale['id']} - {sale['date']}")
             print("-" * 70)
             
-            # Display items
             print(f"{'Item':<30} {'Qty':>5} {'Unit Price':>15} {'Total':>15}")
             print("-" * 70)
             
@@ -604,7 +555,6 @@ class TechHouseApp:
         input("\nPress ENTER...")
     
     def _set_delivery_address(self):
-        """Set or update delivery address"""
         user = self.auth.get_current_user()
         if not user:
             print("\nPlease login first!")
@@ -635,7 +585,6 @@ class TechHouseApp:
             time.sleep(1.5)
             return
         
-        # Build address string
         address_parts = [street]
         if district:
             address_parts.append(district)
@@ -647,7 +596,6 @@ class TechHouseApp:
         
         full_address = ", ".join(address_parts)
         
-        # Save address
         self.auth.set_delivery_address(user['username'], full_address)
         
         print("\n✓ Delivery address saved successfully!")
@@ -655,7 +603,6 @@ class TechHouseApp:
         time.sleep(2)
     
     def _add_product(self):
-        """Admin: Add new product"""
         if not self.auth.is_admin():
             print("\nAdmin access required!")
             time.sleep(1)
@@ -685,7 +632,6 @@ class TechHouseApp:
             time.sleep(1)
             return
         
-        # Select category
         categories = self.database.get_all_categories()
         print("\nSelect category:")
         for i, cat in enumerate(categories, 1):
@@ -702,7 +648,6 @@ class TechHouseApp:
         cat_idx = int(cat_choice) - 1
         
         if cat_idx == len(categories):
-            # Create new category
             category = input("Enter new category name: ").strip()
             if not category:
                 print("\nCategory name cannot be empty!")
@@ -715,7 +660,6 @@ class TechHouseApp:
             time.sleep(1)
             return
         
-        # Add the appliance
         app_id = self.database.add_appliance(name, price, "Available", category)
         print(f"\n✓ Product added successfully!")
         print(f"Product ID: {app_id}")
@@ -726,7 +670,6 @@ class TechHouseApp:
         time.sleep(3)
     
     def _make_admin(self):
-        """Admin: Promote user to admin"""
         if not self.auth.is_admin():
             print("\nAdmin access required!")
             time.sleep(1)
@@ -737,7 +680,6 @@ class TechHouseApp:
         print("[ADMIN] MAKE USER ADMIN")
         print("=" * 70)
         
-        # Display users
         print("\nRegistered Users:")
         print("-" * 70)
         
@@ -777,7 +719,6 @@ class TechHouseApp:
         time.sleep(2)
     
     def _exit_app(self):
-        """Exit application"""
         self._clear()
         print("=" * 70)
         print("THANK YOU FOR VISITING TECH HOUSE!")
@@ -787,7 +728,6 @@ class TechHouseApp:
         exit(0)
     
     def _exit(self):
-        """Return to auth menu"""
         self._clear()
         print("=" * 70)
         print("LOGGING OUT")
@@ -795,11 +735,9 @@ class TechHouseApp:
         time.sleep(1)
     
     def _clear(self):
-        """Clear console screen"""
         os.system("cls" if os.name == "nt" else "clear")
     
     def _fmt(self, price):
-        """Format price in UZS"""
         return f"{int(price):,} UZS"
 
 
