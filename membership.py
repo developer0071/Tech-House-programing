@@ -56,10 +56,7 @@ class Membership:
     
     @staticmethod
     def display_packages():
-        print("\n" + "=" * 70)
-        print("MEMBERSHIP PACKAGES")
-        print("=" * 70)
-        
+        print("MEMBERSHIP PACKAGES")        
         for name, info in Membership.PACKAGES.items():
             print(f"\n{name.upper()}")
             print(f"  Discount: {info['discount']}%")

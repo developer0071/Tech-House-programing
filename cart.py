@@ -7,50 +7,28 @@ class ShoppingCart:
         self.items = {}
 
     def add_item(self, appliance, quantity=1):
-        """Add an appliance to the cart with a chosen quantity"""
-        if not appliance or "id" not in appliance:
-            return False
-
-        try:
-            quantity = int(quantity)
-        except ValueError:
-            return False
-
-        if quantity <= 0:
+        if not appliance or "id" not in appliance or not self._is_valid_quantity(quantity):
             return False
 
         appliance_id = appliance["id"]
 
         if appliance_id in self.items:
-            self.items[appliance_id]["quantity"] += quantity
+            self.items[appliance_id]["quantity"] += int(quantity)
         else:
-            self.items[appliance_id] = {
-                "appliance": appliance.copy(),
-                "quantity": quantity
-            }
+            self.items[appliance_id] = {"appliance": appliance.copy(), "quantity": int(quantity)}
         return True
 
     def remove_item(self, appliance_id):
-        """Remove the whole product from the cart"""
         if appliance_id in self.items:
             del self.items[appliance_id]
             return True
         return False
 
     def remove_quantity(self, appliance_id, quantity=1):
-        """Decrease quantity. If quantity becomes 0 or less, remove the item."""
-        if appliance_id not in self.items:
+        if appliance_id not in self.items or not self._is_valid_quantity(quantity):
             return False
 
-        try:
-            quantity = int(quantity)
-        except ValueError:
-            return False
-
-        if quantity <= 0:
-            return False
-
-        self.items[appliance_id]["quantity"] -= quantity
+        self.items[appliance_id]["quantity"] -= int(quantity)
 
         if self.items[appliance_id]["quantity"] <= 0:
             del self.items[appliance_id]
@@ -58,23 +36,21 @@ class ShoppingCart:
         return True
 
     def set_quantity(self, appliance_id, quantity):
-        """Set exact quantity. If quantity <= 0, removes the item."""
         if appliance_id not in self.items:
             return False
 
         try:
             quantity = int(quantity)
-        except ValueError:
+        except (ValueError, TypeError):
             return False
 
         if quantity <= 0:
             del self.items[appliance_id]
-            return True
-
-        self.items[appliance_id]["quantity"] = quantity
+        else:
+            self.items[appliance_id]["quantity"] = quantity
+        
         return True
 
-    # (optional) keep old name for compatibility
     def update_quantity(self, appliance_id, quantity):
         return self.set_quantity(appliance_id, quantity)
 
@@ -82,13 +58,9 @@ class ShoppingCart:
         total = 0
         for item in self.items.values():
             price = item["appliance"]["price"]
-            quantity = item["quantity"]
-
             if membership_package:
-                price = Membership.calculate_discount(price, membership_package)
-                price = round(price)
-
-            total += price * quantity
+                price = round(Membership.calculate_discount(price, membership_package))
+            total += price * item["quantity"]
         return round(total)
 
     def get_item_count(self):
@@ -107,29 +79,22 @@ class ShoppingCart:
         return self.items.copy()
 
     def display(self, membership_package=None):
-        print("\n" + "=" * 70)
         print("SHOPPING CART")
-        print("=" * 70)
 
         if self.is_empty():
             print("\nYour cart is empty")
             return
 
         print(f"\n{'Product':<35} {'Qty':>5} {'Price':>12} {'Subtotal':>12}")
-        print("-" * 70)
 
-        original_total = 0
-        discounted_total = 0
+        original_total = discounted_total = 0
 
         for item in self.items.values():
             appliance = item["appliance"]
             quantity = item["quantity"]
             original_price = appliance["price"]
 
-            # discounted price (if membership exists)
-            final_price = original_price
-            if membership_package:
-                final_price = Membership.calculate_discount(original_price, membership_package)
+            final_price = round(Membership.calculate_discount(original_price, membership_package)) if membership_package else original_price
 
             original_subtotal = original_price * quantity
             final_subtotal = final_price * quantity
@@ -137,22 +102,14 @@ class ShoppingCart:
             original_total += original_subtotal
             discounted_total += final_subtotal
 
-            # Truncate long names
-            name = appliance["name"]
-            if len(name) > 30:
-                name = name[:27] + "..."
+            name = appliance["name"][:27] + "..." if len(appliance["name"]) > 30 else appliance["name"]
 
-            print(f"{name:<35} {quantity:>5} "
-                f"{self._format_price(final_price):>12} "
-                f"{self._format_price(final_subtotal):>12}")
+            print(f"{name:<35} {quantity:>5} {self._format_price(final_price):>12} {self._format_price(final_subtotal):>12}")
 
-            # If discounted, show original + savings clearly under the item
             if final_price < original_price:
-                save_per_item = original_price - final_price
-                save_total_item = original_subtotal - final_subtotal
                 print(f"{'':<2}Original: {self._format_price(original_price)}"
-                    f" | Save: {self._format_price(save_per_item)} each"
-                    f" ({self._format_price(save_total_item)} total)")
+                      f" | Save: {self._format_price(original_price - final_price)} each"
+                      f" ({self._format_price(original_subtotal - final_subtotal)} total)")
 
         if membership_package:
             package_info = Membership.get_package_info(membership_package)
@@ -161,17 +118,18 @@ class ShoppingCart:
                 print(f"Membership: {membership_package} ({package_info['discount']}% discount)")
 
         print("-" * 70)
-        print(f"{'TOTAL (after discount)':<35} {self.get_item_count():>5} "
-            f"{' '*12} {self._format_price(discounted_total):>12}")
+        print(f"{'TOTAL (after discount)':<35} {self.get_item_count():>5} {' '*12} {self._format_price(discounted_total):>12}")
 
-        # Show savings summary (only if a discount applied)
         savings = original_total - discounted_total
         if savings > 0:
-            print(f"{'TOTAL (before discount)':<35} {'':>5} "
-                f"{' '*12} {self._format_price(original_total):>12}")
-            print(f"{'YOU SAVE':<35} {'':>5} "
-                f"{' '*12} {self._format_price(savings):>12}")
+            print(f"{'TOTAL (before discount)':<35} {'':>5} {' '*12} {self._format_price(original_total):>12}")
+            print(f"{'YOU SAVE':<35} {'':>5} {' '*12} {self._format_price(savings):>12}")
 
+    def _is_valid_quantity(self, quantity):
+        try:
+            return int(quantity) > 0
+        except (ValueError, TypeError):
+            return False
 
     def _format_price(self, price):
         return f"{int(price):,} UZS"
